@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - name: Checkout code
@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -33,22 +32,3 @@ jobs:
           name: NapCodeChiBia-Windows
           path: dist/NapCodeChiBia.exe
           retention-days: 90
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: "NAP CODE CHI BIA v1.0.${{ github.run_number }}"
-          body: |
-            ## NAP CODE CHI BIA TAP BAN - ESP32/S3/C3 Flasher
-            ### Cách dùng:
-            1. Tải file NapCodeChiBia.exe bên dưới
-            2. Double-click để chạy
-            3. Cắm ESP32/S3/C3 vào USB
-            4. Chọn file .bin → bấm NẠP CODE TẠI ĐÂY
-          files: dist/NapCodeChiBia.exe
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
