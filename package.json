@@ -1,0 +1,43 @@
+{
+  "name": "nap-code-chi-bia",
+  "version": "1.0.0",
+  "description": "NAP CODE CHI BIA TAP BAN - ESP32/S3/C3 Flasher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable --x64"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^26.15.0"
+  },
+  "build": {
+    "appId": "com.esp.napcode",
+    "productName": "NAP CODE CHI BIA",
+    "copyright": "ESP32 Flasher Tool",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "icon.ico"
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "portable": {
+      "artifactName": "NapCodeChiBia.exe",
+      "unpackDirName": "NapCodeChiBia"
+    }
+  }
+}
