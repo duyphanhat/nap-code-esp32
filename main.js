@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -9,15 +9,15 @@ app.commandLine.appendSwitch('enable-blink-features', 'WebSerial');
 
 let server;
 let serverPort = 9876;
+let pendingPortCallback = null;
+let mainWin = null;
 
 function startLocalServer() {
   return new Promise((resolve) => {
     server = http.createServer((req, res) => {
       const filePath = path.join(__dirname, 'index.html');
       const content = fs.readFileSync(filePath);
-      res.writeHead(200, {
-        'Content-Type': 'text/html; charset=utf-8',
-      });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(content);
     });
     server.listen(serverPort, '127.0.0.1', () => resolve());
@@ -29,7 +29,7 @@ function startLocalServer() {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWin = new BrowserWindow({
     width: 1200,
     height: 720,
     minWidth: 1050,
@@ -39,6 +39,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
     frame: true,
     backgroundColor: '#d4d0c8',
@@ -46,32 +47,37 @@ function createWindow() {
   });
 
   Menu.setApplicationMenu(null);
+  win = mainWin;
 
-  // Cho phep tat ca quyen - quan trong nhat
-  win.webContents.session.setPermissionCheckHandler((wc, permission, ro, details) => {
-    return true;
-  });
+  win.webContents.session.setPermissionCheckHandler(() => true);
+  win.webContents.session.setDevicePermissionHandler(() => true);
 
-  win.webContents.session.setDevicePermissionHandler((details) => {
-    return true;
-  });
-
-  // Quan trong: cho phep chon serial port khong can hoi
+  // Bat su kien chon serial port - hien hop thoai tu tao
   win.webContents.session.on('select-serial-port', (event, portList, webContents, callback) => {
     event.preventDefault();
-    if (portList && portList.length > 0) {
-      callback(portList[0].portId);
-    } else {
+
+    if (portList.length === 0) {
+      // Khong co port nao
+      win.webContents.executeJavaScript(`
+        alert('Khong tim thay cong COM nao!\\nHay cam mach ESP32 vao USB truoc.');
+      `);
       callback('');
+      return;
     }
+
+    // Luu callback lai
+    pendingPortCallback = callback;
+
+    // Gui danh sach port len renderer de hien hop chon
+    win.webContents.send('show-port-picker', portList);
   });
 
-  win.webContents.session.on('serial-port-added', (event, port) => {
-    console.log('Serial port added:', port);
-  });
-
-  win.webContents.session.on('serial-port-removed', (event, port) => {
-    console.log('Serial port removed:', port);
+  // Nhan ket qua chon tu renderer
+  ipcMain.on('port-selected', (event, portId) => {
+    if (pendingPortCallback) {
+      pendingPortCallback(portId);
+      pendingPortCallback = null;
+    }
   });
 
   win.loadURL(`http://127.0.0.1:${serverPort}`);
