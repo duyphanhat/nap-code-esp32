@@ -8,7 +8,7 @@ app.commandLine.appendSwitch('enable-blink-features', 'WebSerial');
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200, height: 720, minWidth: 1050, minHeight: 620,
-    title: 'NAP CODE CHI BIA TAP BAN',
+    title: 'NAP CODE CHO BIA TAP BAN',
     icon: path.join(__dirname, 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
