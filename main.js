@@ -1,9 +1,9 @@
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 
-// Bat Web Serial API cho ESP32 flashing
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.commandLine.appendSwitch('enable-features', 'WebSerial');
+app.commandLine.appendSwitch('enable-blink-features', 'WebSerial');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -16,6 +16,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      allowRunningInsecureContent: false,
     },
     frame: true,
     backgroundColor: '#d4d0c8',
@@ -30,8 +31,15 @@ function createWindow() {
     win.focus();
   });
 
-  win.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file://')) event.preventDefault();
+  // Tự động cho phép Web Serial - không hỏi quyền
+  win.webContents.session.setPermissionCheckHandler((webContents, permission) => {
+    if (permission === 'serial') return true;
+    return true;
+  });
+
+  win.webContents.session.setDevicePermissionHandler((details) => {
+    if (details.deviceType === 'serial') return true;
+    return true;
   });
 }
 
