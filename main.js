@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, protocol } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -16,15 +16,11 @@ function startLocalServer() {
       const filePath = path.join(__dirname, 'index.html');
       const content = fs.readFileSync(filePath);
       res.writeHead(200, {
-        'Content-Type': 'text/html',
-        'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Content-Type': 'text/html; charset=utf-8',
       });
       res.end(content);
     });
-    server.listen(serverPort, '127.0.0.1', () => {
-      resolve();
-    });
+    server.listen(serverPort, '127.0.0.1', () => resolve());
     server.on('error', () => {
       serverPort++;
       server.listen(serverPort, '127.0.0.1', () => resolve());
@@ -51,11 +47,33 @@ function createWindow() {
 
   Menu.setApplicationMenu(null);
 
-  // Cho phep Web Serial khong hoi quyen
-  win.webContents.session.setPermissionCheckHandler(() => true);
-  win.webContents.session.setDevicePermissionHandler(() => true);
+  // Cho phep tat ca quyen - quan trong nhat
+  win.webContents.session.setPermissionCheckHandler((wc, permission, ro, details) => {
+    return true;
+  });
 
-  // Load qua localhost de Web Serial hoat dong
+  win.webContents.session.setDevicePermissionHandler((details) => {
+    return true;
+  });
+
+  // Quan trong: cho phep chon serial port khong can hoi
+  win.webContents.session.on('select-serial-port', (event, portList, webContents, callback) => {
+    event.preventDefault();
+    if (portList && portList.length > 0) {
+      callback(portList[0].portId);
+    } else {
+      callback('');
+    }
+  });
+
+  win.webContents.session.on('serial-port-added', (event, port) => {
+    console.log('Serial port added:', port);
+  });
+
+  win.webContents.session.on('serial-port-removed', (event, port) => {
+    console.log('Serial port removed:', port);
+  });
+
   win.loadURL(`http://127.0.0.1:${serverPort}`);
 
   win.once('ready-to-show', () => {
