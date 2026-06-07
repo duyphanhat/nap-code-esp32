@@ -16,22 +16,12 @@
   "build": {
     "appId": "com.esp.napcode",
     "productName": "NAP CODE CHI BIA",
-    "copyright": "ESP32 Flasher Tool",
     "directories": { "output": "dist" },
-    "files": [
-      "main.js",
-      "preload.js",
-      "index.html",
-      "icon.ico"
-    ],
+    "files": ["main.js", "index.html", "icon.ico"],
     "win": {
       "icon": "icon.ico",
-      "target": [{ "target": "portable", "arch": ["x64"] }],
-      "requestedExecutionLevel": "asInvoker"
+      "target": [{ "target": "portable", "arch": ["x64"] }]
     },
-    "portable": {
-      "artifactName": "NapCodeChiBia.exe",
-      "unpackDirName": "NapCodeChiBia"
-    }
+    "portable": { "artifactName": "NapCodeChiBia.exe" }
   }
 }
