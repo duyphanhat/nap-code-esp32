@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CHUONG TRÌNH DEMO NAP CODE CHI BIA TAP BAN</title>
+<title>CHUONG TRÌNH DEMO NAP CODE </title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -576,7 +576,8 @@
       return;
     }
     try {
-      port = await navigator.serial.requestPort();
+      port = await selectPort();
+      if (!port) { log('Huy chon cong COM.', 'warn'); return; }
       setStatus('connected', 'CONNECTED');
       document.getElementById('connectBtn').textContent = '❌ Disconnect';
       log('COM port requested and opened successfully.', 'success');
@@ -615,7 +616,8 @@
 
     try {
       if (!port) {
-        port = await navigator.serial.requestPort();
+        port = await selectPort();
+        if (!port) { log('Huy chon cong COM.', 'warn'); return; }
         document.getElementById('connectBtn').textContent = '❌ Disconnect';
       }
 
@@ -696,6 +698,66 @@
       handleFile(input);
     }
   });
+
+// ========== CUSTOM COM PORT PICKER ==========
+function showComPicker(ports, callback) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#d4d0c8;border:2px solid #808080;padding:0;min-width:340px;font-family:Tahoma,sans-serif;box-shadow:4px 4px 10px rgba(0,0,0,0.6);';
+
+  box.innerHTML = `
+    <div style="background:#000080;color:#fff;padding:5px 10px;font-weight:bold;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+      <span>Chon Cong COM - ESP32</span>
+    </div>
+    <div style="padding:14px;">
+      <p style="margin:0 0 8px;font-size:13px;">Chon cong COM cua mach ESP32:</p>
+      <select id="comPickerSelect" style="width:100%;padding:5px;font-size:13px;margin-bottom:14px;border:1px inset #808080;">
+        ${ports.map((p,i) => `<option value="${i}">${p.getInfo ? (p.getInfo().usbVendorId ? 'COM (USB-Serial)' : 'Serial Port') : 'COM Port'} #${i+1}</option>`).join('')}
+      </select>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button id="comPickerOK" style="padding:4px 24px;font-size:13px;cursor:pointer;background:#d4d0c8;border:2px outset #fff;">Ket Noi</button>
+        <button id="comPickerCancel" style="padding:4px 24px;font-size:13px;cursor:pointer;background:#d4d0c8;border:2px outset #fff;">Huy</button>
+      </div>
+    </div>
+  `;
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById('comPickerOK').onclick = () => {
+    const idx = parseInt(document.getElementById('comPickerSelect').value);
+    document.body.removeChild(overlay);
+    callback(ports[idx]);
+  };
+  document.getElementById('comPickerCancel').onclick = () => {
+    document.body.removeChild(overlay);
+    callback(null);
+  };
+}
+
+async function selectPort() {
+  // Thu lay danh sach port da co quyen
+  let ports = [];
+  try { ports = await navigator.serial.getPorts(); } catch(e) {}
+
+  return new Promise(async (resolve) => {
+    if (ports.length === 0) {
+      // Chua co port nao duoc cap quyen - goi requestPort native
+      try {
+        const p = await navigator.serial.requestPort();
+        resolve(p);
+      } catch(e) {
+        resolve(null);
+      }
+    } else if (ports.length === 1) {
+      resolve(ports[0]);
+    } else {
+      showComPicker(ports, resolve);
+    }
+  });
+}
 </script>
 </body>
 </html>
